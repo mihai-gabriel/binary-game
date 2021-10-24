@@ -1,122 +1,23 @@
 import {Component} from "react";
 import axios from "axios";
 import './Game.css';
+import contains from "./Utility";
+import {Board} from "./Board";
+import {GameOver} from "./GameOver";
+import {SwitchButton} from "./SwitchButton";
+import {ResetButton} from "./ResetButton";
+import {Pocket} from "./Pocket";
 
 
-function GameOver(props) {
-    return (
-        <div className={props.isWon ? "gameStatus" : "hidden"}>
-            <h2>Congrats, you won</h2>
-        </div>
-    )
-}
-
-function Pocket(props) {
-    return (
-        <div className="pocket">
-            <div>
-                <span className={props.zeros === 0 ? "empty" : ""}>{props.zeros} zeros left</span>
-            </div>
-            <div className="break" />
-            <div>
-                <span className={props.ones === 0 ? "empty" : ""}>{props.ones} ones left</span>
-            </div>
-        </div>
-    )
-}
-
-function ResetButton(props) {
-    return (
-        <div className="gameReset">
-            <button onClick={() => props.onClick()}>Reset game</button>
-        </div>
-    )
-}
-
-function SwitchButton(props) {
-    return (
-        <button
-            onClick={() => {props.onClick(props.switchValue)}}
-            className={props.value === props.switchValue ? "active" : ""}
-        >{props.switchValue}
-        </button>
-    )
-}
-
-class Board extends Component {
-    constructor(props) {
-        super(props);
-        this.mappingLines = {
-            0: '6',
-            1: '5',
-            2: '4',
-            3: '3',
-            4: '2',
-            5: '1',
-        }
-        this.mappingColumns = {
-            0: 'A',
-            1: 'B',
-            2: 'C',
-            3: 'D',
-            4: 'E',
-            5: 'F',
-        }
-    }
-
-    getCoord(i, j) {
-        return this.mappingColumns[j] + this.mappingLines[i];
-    }
-
-    renderColumn(i, j) {
-        let isPreset = contains(this.props.immutable, [i, j]);
-        let boardValue = this.props.board[i][j];
-        let displayValue = boardValue !== '-' ? boardValue : " ";
-        let coord = this.getCoord(i, j);
-
-        return (
-            <td
-                key={coord}
-                onClick={() => this.props.updateBoard(i, j)}
-                className={isPreset ? "preset" : ""}
-            >{displayValue}</td>
-        );
-    }
-
-    renderRow(i) {
-        let columns = [];
-        for (let j = 0; j < 6; j++) {
-            columns.push(this.renderColumn(i, j));
-        }
-
-        return (
-            <tr key={this.mappingColumns[i]}>
-                {columns}
-            </tr>
-        )
-    }
-
-    render() {
-        let rows = [];
-        for (let i = 0; i < 6; i++) {
-            rows.push(this.renderRow(i));
-        }
-
-        return (
-            <table className="gameBoard">
-                <tbody>
-                {rows}
-                </tbody>
-            </table>
-        )
-    }
-}
-
-class Game extends Component {
+export class Game extends Component {
     constructor(props) {
         super(props);
         this.initialGame = {};
         this.state = {
+            faultyLines: {
+                columns: [],
+                rows: []
+            },
             immutable: [],
             pocket: {
                 0: 0,
@@ -146,14 +47,17 @@ class Game extends Component {
         let result = [];
         let immutable = [];
         this.initialGame.fen.split('/').forEach((row, i) => {
-            let rowSplit = row.split('');
-            result.push(rowSplit);
+            let rowList = [];
 
-            rowSplit.forEach((column, j) => {
+            row.split('').forEach((column, j) => {
                 if (column !== '-') {
                     immutable.push([i, j]);
+                    rowList.push(parseInt(column));
+                } else {
+                    rowList.push(column);
                 }
             });
+            result.push(rowList);
         });
         this.setState({board: result, immutable: immutable});
     }
@@ -171,8 +75,53 @@ class Game extends Component {
     }
 
     resetGame() {
-        this.setState({pocket: this.initialGame.pocket});
+        this.setState({
+            pocket: this.initialGame.pocket,
+            faultyLines: {
+                columns: [],
+                rows: []
+            }
+        });
         this.loadFen();
+    }
+
+    checkLine(line) {
+        let zeros = (line.match(/0/g) || []).length;
+        let ones = (line.match(/1/g) || []).length;
+
+        if (ones > 3 || zeros > 3) {
+            return true;
+        }
+
+        return /1{3}|0{3}/.test(line);
+    }
+
+    validateBoard() {
+        let board = this.state.board;
+        let faultyColumns = [];
+        let faultyRows = [];
+        for (let i = 0; i < 6; i++) {
+            let row = "";
+            let column = "";
+            for (let j = 0; j < 6; j++) {
+                row += board[i][j].toString();
+                column += board[j][i].toString();
+            }
+
+            if (this.checkLine(column)) {
+                faultyColumns.push(i);
+            }
+
+            if (this.checkLine(row)) {
+                faultyRows.push(i);
+            }
+        }
+        this.setState({
+            faultyLines: {
+                columns: faultyColumns,
+                rows: faultyRows,
+            }
+        });
     }
 
     updateBoard(i, j) {
@@ -247,6 +196,8 @@ class Game extends Component {
                         immutable={this.state.immutable}
                         board={this.state.board}
                         updateBoard={this.updateBoard.bind(this)}
+                        faultyLines={this.state.faultyLines}
+                        validateBoard={this.validateBoard.bind(this)}
                     />
                 </div>
                 <div className="switchButtons">
@@ -258,13 +209,3 @@ class Game extends Component {
         )
     }
 }
-
-function contains(arr, item) {
-    let itemString = JSON.stringify(item);
-
-    return arr.some(el => {
-        return JSON.stringify(el) === itemString;
-    });
-}
-
-export default Game;

@@ -4,6 +4,10 @@
     user-select: none;
 }
 
+.invalid {
+    color: red !important;
+}
+
 .gameBoard td {
     border: 1px solid #000;
     padding: 16px 24px;
@@ -13,7 +17,6 @@
 }
 
 .gameBoard td.preset {
-    color: black !important;
     background-color: #f0f0f0;
 }
 
