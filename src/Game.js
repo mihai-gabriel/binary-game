@@ -101,6 +101,21 @@ class Game extends Component {
             return;
         }
 
+        if (currentValue === 'take') {
+            if (!isNaN(oldValue)) {
+                let oppositeOldValue = Math.abs(oldValue - 1);
+                currentBoard[i][j] = "-";
+                this.setState({
+                    board: currentBoard,
+                    pocket: {
+                        [oldValue]: this.state.pocket[oldValue] + 1,
+                        [oppositeOldValue]: this.state.pocket[oppositeOldValue]
+                    }
+                });
+            }
+            return;
+        }
+
         this.setState({
             pocket: {
                 [currentValue]: this.state.pocket[currentValue] - (oldValue === currentValue ? 0 : 1),
@@ -196,6 +211,10 @@ class Game extends Component {
                         className={this.state.value === 0 ? "active" : ""}
                     >0
                     </button>
+                    <button
+                        onClick={() => {this.setState({value: 'take'})}}
+                        className={this.state.value === 'take' ? "active" : ""}
+                    >Take</button>
                 </div>
             </>
 
