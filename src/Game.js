@@ -32,6 +32,22 @@ class Game extends Component {
                 ['-', '-', '-', '-', '-', '-'],
             ]
         }
+        this.mappingLines = {
+            0: '6',
+            1: '5',
+            2: '4',
+            3: '3',
+            4: '2',
+            5: '1',
+        }
+        this.mappingColumns = {
+            0: 'A',
+            1: 'B',
+            2: 'C',
+            3: 'D',
+            4: 'E',
+            5: 'F',
+        }
     }
 
     fen() {
@@ -75,21 +91,13 @@ class Game extends Component {
         this.loadFen();
     }
 
-    componentDidMount() {
-        this.fetchPreset();
-    }
-
     updateBoard(i, j) {
         let currentBoard = this.state.board;
         let oldValue = parseInt(currentBoard[i][j]);
         let currentValue = this.state.value;
         let oppositeValue = Math.abs(this.state.value - 1); // abs(0 - 1) = 1 || abs(1 - 1) = 0
 
-        if (contains(this.state.immutable, [i, j])) {
-            return;
-        }
-
-        if (this.state.pocket[currentValue] === 0) {
+        if (contains(this.state.immutable, [i, j]) || this.state.pocket[currentValue] === 0) {
             return;
         }
 
@@ -104,12 +112,18 @@ class Game extends Component {
         this.setState({board: currentBoard});
     }
 
+    getCoord(i, j) {
+        return this.mappingColumns[j] + this.mappingLines[i];
+    }
+
     renderSquare(i, j) {
         let isPreset = contains(this.state.immutable, [i, j]);
         let value = this.state.board[i][j] !== '-' ? this.state.board[i][j] : " ";
+        let coord = this.getCoord(i, j);
 
         return (
             <td
+                key={coord}
                 onClick={() => this.updateBoard(i, j)}
                 className={isPreset ? "preset" : ""}
             >{value}</td>
@@ -123,7 +137,7 @@ class Game extends Component {
         }
 
         return (
-            <tr>
+            <tr key={this.mappingColumns[i]}>
                 {columns}
             </tr>
         )
@@ -137,11 +151,16 @@ class Game extends Component {
 
         return (
             <table className="gameBoard">
-                {rows}
+                <tbody>
+                    {rows}
+                </tbody>
             </table>
         )
     }
 
+    componentDidMount() {
+        this.fetchPreset();
+    }
 
     render() {
         let won = this.state.winning === this.fen();
