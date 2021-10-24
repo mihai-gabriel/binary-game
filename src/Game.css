@@ -1,6 +1,7 @@
 .gameBoard {
     border-collapse: collapse;
     margin: 35px auto;
+    user-select: none;
 }
 
 .gameBoard td {
@@ -12,10 +13,11 @@
 }
 
 .gameBoard td.preset {
-    color: #FF4136 !important;
+    color: black !important;
+    background-color: #f0f0f0;
 }
 
-.switchButtons, .gameControls {
+.switchButtons, .gameReset {
     display: flex;
     justify-content: center;
 }
@@ -27,26 +29,31 @@
     flex-wrap: wrap;
 }
 
+.pocket span.empty {
+    color: #FF4136;
+    text-decoration: line-through;
+}
+
 .break {
     flex-basis: 100%;
     height: 0;
 }
 
-.switchButtons button, .gameControls button {
+.switchButtons button, .gameReset button {
     padding: 15px 25px;
     border: none;
 }
 
-.switchButtons button:hover, .gameControls button:hover {
+.switchButtons button:hover, .gameReset button:hover {
     cursor: pointer;
 }
 
-.switchButtons button.active, .gameControls button:active {
+.switchButtons button.active, .gameReset button.active, .gameReset button:hover {
     background-color: #ccc;
     border: none;
 }
 
-.gameControls {
+.gameReset {
     margin-top: 20px;
 }
 
