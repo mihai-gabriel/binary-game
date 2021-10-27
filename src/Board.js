@@ -33,8 +33,8 @@ export class Board extends Component {
         return faultyColumns.includes(j) || faultyRows.includes(i);
     }
 
-    update(i, j) {
-        this.props.updateBoard(i, j);
+    update(e, i, j) {
+        this.props.updateBoard(e, i, j);
         this.props.validateBoard();
     }
 
@@ -48,7 +48,8 @@ export class Board extends Component {
         return (
             <td
                 key={coord}
-                onClick={() => this.update(i, j)}
+                onClick={(e) => this.update(e, i, j)}
+                onContextMenu={(e) => this.update(e, i, j)}
                 className={(isPreset ? "preset " : "") + (faulty ? "invalid": "")}
             >{displayValue}</td>
         );
@@ -74,7 +75,7 @@ export class Board extends Component {
         }
 
         return (
-            <table className="gameBoard">
+            <table>
                 <tbody>
                     {rows}
                 </tbody>

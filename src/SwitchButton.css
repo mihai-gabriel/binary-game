@@ -1,0 +1,13 @@
+.switchButtons {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+    align-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.switchButtons .toggleButton {
+    font-size: 40px;
+    cursor: pointer;
+}

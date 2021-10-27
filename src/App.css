@@ -1,0 +1,35 @@
+
+.title {
+    margin-top: 0;
+    text-align: center;
+    color: white;
+}
+
+.subtitle {
+    text-align: center;
+}
+
+.mockBoards {
+    padding: 40px 40px 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+}
+
+.notVisible {
+    display: none;
+}
+
+.gameChosen {
+
+}
+
+.content {
+    padding: 40px 0;
+    background-color: #001f3f;
+    color: white;
+    min-height: 1000px;
+    font-family: 'Share Tech Mono', monospace !important;
+}

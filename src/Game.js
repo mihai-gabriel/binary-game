@@ -3,16 +3,18 @@ import axios from "axios";
 import './Game.css';
 import contains from "./Utility";
 import {Board} from "./Board";
-import {GameOver} from "./GameOver";
+import {Overlay} from "./Overlay";
 import {SwitchButton} from "./SwitchButton";
 import {ResetButton} from "./ResetButton";
 import {Pocket} from "./Pocket";
+import {BackButton} from "./BackButton";
 
 
 export class Game extends Component {
     constructor(props) {
         super(props);
         this.initialGame = {};
+        this.url = `http://127.0.0.1:5000/api/v2/resources/game/${props.letter}/`;
         this.state = {
             faultyLines: {
                 columns: [],
@@ -63,7 +65,7 @@ export class Game extends Component {
     }
 
     async fetchPreset() {
-        let response = await axios.get('http://127.0.0.1:5000/api/v1/resources/game');
+        let response = await axios.get(this.url);
         this.initialGame.fen = response.data['fen'];
         this.initialGame.pocket = response.data['pocket'];
 
@@ -71,7 +73,7 @@ export class Game extends Component {
             pocket: response.data['pocket'],
             winning: response.data['winning'],
         });
-        this.loadFen();
+        return response;
     }
 
     resetGame() {
@@ -124,19 +126,20 @@ export class Game extends Component {
         });
     }
 
-    updateBoard(i, j) {
+    getOpposite(value) {
+        return Math.abs(value - 1); // abs(0 - 1) = 1 || abs(1 - 1) = 0
+    }
+
+    updateBoard(e, i, j) {
+        const immutable = contains(this.state.immutable, [i, j]);
         let currentBoard = this.state.board;
         let oldValue = parseInt(currentBoard[i][j]);
         let currentValue = this.state.value;
-        let oppositeValue = Math.abs(this.state.value - 1); // abs(0 - 1) = 1 || abs(1 - 1) = 0
+        let oppositeValue = this.getOpposite(currentValue);
 
-        if (contains(this.state.immutable, [i, j]) ||
-            this.state.pocket[currentValue] === 0) {
-            return;
-        }
-
-        if (currentValue === 'take') {
-            if (isNaN(oldValue)) {
+        if (e.type === 'contextmenu') {
+            e.preventDefault();
+            if (isNaN(oldValue) || immutable) {
                 return;
             }
 
@@ -151,6 +154,10 @@ export class Game extends Component {
             return;
         }
 
+        if (immutable || this.state.pocket[currentValue] === 0) {
+            return;
+        }
+
         this.setState({
             pocket: {
                 [currentValue]: this.state.pocket[currentValue] - (oldValue === currentValue ? 0 : 1),
@@ -162,48 +169,65 @@ export class Game extends Component {
         this.setState({board: currentBoard});
     }
 
-    setValue(value) {
-        this.setState({value: value});
+    switchValue(value) {
+        let oppositeValue = this.getOpposite(value);
+        this.setState({value: oppositeValue});
     }
 
     componentDidMount() {
-        this.fetchPreset();
-    }
-
-    renderSwitchButton(value) {
-        return (
-            <SwitchButton
-                switchValue={value}
-                onClick={this.setValue.bind(this)}
-                value={this.state.value}
-            />
-        )
+        this.fetchPreset().then(response => {
+            this.loadFen();
+        });
     }
 
     render() {
-        let won = this.state.winning === this.fen();
+        let won;
+        if (this.state.pocket[0] + this.state.pocket[1] === 0) {
+            won = this.state.winning === this.fen()
+        }
 
         return (
             <div className="game">
-                <GameOver isWon={won}/>
-                <Pocket
-                    zeros={this.state.pocket[0]}
-                    ones={this.state.pocket[1]}
-                />
-                <ResetButton onClick={this.resetGame.bind(this)}/>
+                <div className="gameHeader">
+                    <Pocket
+                        zeros={this.state.pocket[0]}
+                        ones={this.state.pocket[1]}
+                    />
+                    <div className="controlButtons">
+                        <ResetButton onClick={this.resetGame.bind(this)} message="Reset"/>
+                        <BackButton onClick={() => {this.props.back()}}/>
+                    </div>
+                </div>
                 <div className="gameBoard">
+                    <h1>Puzzle {this.props.letter}</h1>
+
+                    <Overlay gameFinished={won}/>
                     <Board
                         immutable={this.state.immutable}
                         board={this.state.board}
                         updateBoard={this.updateBoard.bind(this)}
                         faultyLines={this.state.faultyLines}
                         validateBoard={this.validateBoard.bind(this)}
+                        gameFinished={won}
                     />
+                    <SwitchButton onClick={this.switchValue.bind(this)} value={this.state.value}/>
+
                 </div>
-                <div className="switchButtons">
-                    {this.renderSwitchButton(1)}
-                    {this.renderSwitchButton(0)}
-                    {this.renderSwitchButton('take')}
+                <div className="gameInfo">
+                    <div className="gameRules">
+                        <h1>Aim</h1>
+                        <p>
+                            Solve the grid by placing a 1 or  <br/>
+                            a 0 in each remaining spot
+                        </p>
+                        <h1>Game Rules</h1>
+                        <ul>
+                            <li>Each row and column contains the same amount of 1's and 0's</li>
+                            <li>Each row and column forms a unique pattern</li>
+                            <li>There are never more than two 1's or 0's next to each other, horizontally or vertically</li>
+                        </ul>
+                    </div>
+                    <p><small>Pro tip:</small> <br/>Right-click to remove</p>
                 </div>
             </div>
         )

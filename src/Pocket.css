@@ -1,0 +1,9 @@
+.pocket span.empty {
+    color: #FF4136;
+    text-decoration: line-through;
+}
+
+.pocket {
+    height: 20%;
+    text-align: right;
+}
